@@ -14,6 +14,7 @@ import {
   Modal,
   Form,
   Input,
+  InputNumber,
   Select,
   DatePicker,
   TimePicker,
@@ -118,7 +119,6 @@ const CustomerDetail = () => {
   const handleSaveEvent = async () => {
     try {
       const values = await form.validateFields();
-      const salesInfo = salesTeam[0]; // Current user is 张明 (S001)
       const event = {
         id: editingEvent?.id || `E${Date.now()}`,
         customerId: id,
@@ -127,8 +127,10 @@ const CustomerDetail = () => {
         description: values.description,
         result: values.result,
         salesId: 'S001',
-        createdAt: values.eventDate?.toISOString() || new Date().toISOString(),
-        duration: values.duration,
+        createdAt: values.eventDate
+          ? values.eventDate.format('YYYY-MM-DDTHH:mm:ss')
+          : new Date().toISOString(),
+        duration: parseInt(values.duration) || 0,
         nextAction: values.nextAction || null,
         nextActionDate: values.nextActionDate?.format('YYYY-MM-DD') || null,
       };
@@ -525,7 +527,7 @@ const CustomerDetail = () => {
             </Col>
             <Col span={12}>
               <Form.Item name="duration" label="时长(分钟)">
-                <Input type="number" placeholder="30" />
+                <InputNumber style={{ width: '100%' }} min={0} max={999} placeholder="30" />
               </Form.Item>
             </Col>
           </Row>

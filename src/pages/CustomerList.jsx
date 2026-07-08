@@ -13,6 +13,11 @@ import {
   Row,
   Col,
   Statistic,
+  Modal,
+  Form,
+  InputNumber,
+  message,
+  Divider,
 } from 'antd';
 import {
   SearchOutlined,
@@ -24,6 +29,8 @@ import {
   TeamOutlined,
   CrownOutlined,
   FireOutlined,
+  EnvironmentOutlined,
+  BankOutlined,
 } from '@ant-design/icons';
 import { useNavigate } from 'react-router-dom';
 import { storage } from '../utils/storage';
@@ -39,7 +46,55 @@ const CustomerList = () => {
   const [levelFilter, setLevelFilter] = useState(null);
   const [statusFilter, setStatusFilter] = useState(null);
   const [salesFilter, setSalesFilter] = useState(null);
+  const [modalOpen, setModalOpen] = useState(false);
+  const [form] = Form.useForm();
+  const [messageApi, contextHolder] = message.useMessage();
   const navigate = useNavigate();
+
+  const handleAddCustomer = () => {
+    form.resetFields();
+    form.setFieldsValue({
+      level: 'C',
+      status: 'active',
+      salesOwner: 'S001',
+      totalOrders: 0,
+      annualRevenue: 0,
+    });
+    setModalOpen(true);
+  };
+
+  const handleSaveCustomer = async () => {
+    try {
+      const values = await form.validateFields();
+      const newId = `C${String(Date.now()).slice(-6)}`;
+      const now = new Date();
+      const customer = {
+        id: newId,
+        name: values.name,
+        shortName: values.shortName,
+        industry: values.industry || '国际货代',
+        contactPerson: values.contactPerson,
+        contactPhone: values.contactPhone || '',
+        contactEmail: values.contactEmail || '',
+        address: values.address || '',
+        level: values.level,
+        status: values.status,
+        salesOwner: values.salesOwner,
+        totalOrders: values.totalOrders || 0,
+        annualRevenue: values.annualRevenue || 0,
+        cooperationSince: `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`,
+        tags: values.tags ? values.tags.split(/[,，、]/).map(t => t.trim()).filter(Boolean) : [],
+        notes: values.notes || '',
+      };
+      storage.saveCustomer(customer);
+      setCustomers(storage.getCustomers());
+      setEvents(storage.getEvents());
+      setModalOpen(false);
+      messageApi.success('客户已添加');
+    } catch (err) {
+      console.error(err);
+    }
+  };
 
   useEffect(() => {
     storage.init();
@@ -193,6 +248,7 @@ const CustomerList = () => {
 
   return (
     <div>
+      {contextHolder}
       <div style={{ marginBottom: 24 }}>
         <Title level={4} style={{ marginBottom: 4 }}>
           客户管理
@@ -299,7 +355,7 @@ const CustomerList = () => {
             </Select>
           </Col>
           <Col xs={24} sm={3} style={{ textAlign: 'right' }}>
-            <Button type="primary" icon={<PlusOutlined />}>
+            <Button type="primary" icon={<PlusOutlined />} onClick={handleAddCustomer}>
               新增客户
             </Button>
           </Col>
@@ -321,6 +377,137 @@ const CustomerList = () => {
           scroll={{ x: 900 }}
         />
       </Card>
+
+      {/* Add Customer Modal */}
+      <Modal
+        title="新增客户"
+        open={modalOpen}
+        onOk={handleSaveCustomer}
+        onCancel={() => setModalOpen(false)}
+        width={680}
+        okText="保存"
+        cancelText="取消"
+        destroyOnClose
+      >
+        <Form form={form} layout="vertical" style={{ marginTop: 16 }}>
+          <Row gutter={16}>
+            <Col span={16}>
+              <Form.Item
+                name="name"
+                label="客户全称"
+                rules={[{ required: true, message: '请输入客户全称' }]}
+              >
+                <Input placeholder="例如：上海邦达国际物流有限公司" />
+              </Form.Item>
+            </Col>
+            <Col span={8}>
+              <Form.Item
+                name="shortName"
+                label="简称"
+                rules={[{ required: true, message: '请输入简称' }]}
+              >
+                <Input placeholder="例如：邦达国际" />
+              </Form.Item>
+            </Col>
+          </Row>
+
+          <Row gutter={16}>
+            <Col span={8}>
+              <Form.Item
+                name="contactPerson"
+                label="联系人"
+                rules={[{ required: true, message: '请输入联系人' }]}
+              >
+                <Input prefix={<UserOutlined />} placeholder="联系人姓名" />
+              </Form.Item>
+            </Col>
+            <Col span={8}>
+              <Form.Item name="contactPhone" label="电话">
+                <Input prefix={<PhoneOutlined />} placeholder="联系电话" />
+              </Form.Item>
+            </Col>
+            <Col span={8}>
+              <Form.Item name="contactEmail" label="邮箱">
+                <Input prefix={<MailOutlined />} placeholder="联系邮箱" />
+              </Form.Item>
+            </Col>
+          </Row>
+
+          <Row gutter={16}>
+            <Col span={8}>
+              <Form.Item name="industry" label="行业">
+                <Select placeholder="选择行业">
+                  <Option value="国际货代">国际货代</Option>
+                  <Option value="供应链物流">供应链物流</Option>
+                  <Option value="航运">航运</Option>
+                  <Option value="集装箱物流">集装箱物流</Option>
+                  <Option value="跨境电商物流">跨境电商物流</Option>
+                  <Option value="仓储物流">仓储物流</Option>
+                </Select>
+              </Form.Item>
+            </Col>
+            <Col span={8}>
+              <Form.Item name="level" label="客户等级">
+                <Select>
+                  <Option value="A">A级（重点客户）</Option>
+                  <Option value="B">B级（成长客户）</Option>
+                  <Option value="C">C级（一般客户）</Option>
+                  <Option value="D">D级（低活跃）</Option>
+                </Select>
+              </Form.Item>
+            </Col>
+            <Col span={8}>
+              <Form.Item name="status" label="状态">
+                <Select>
+                  <Option value="active">活跃</Option>
+                  <Option value="inactive">沉默</Option>
+                </Select>
+              </Form.Item>
+            </Col>
+          </Row>
+
+          <Form.Item name="address" label="地址">
+            <Input prefix={<EnvironmentOutlined />} placeholder="客户公司地址" />
+          </Form.Item>
+
+          <Row gutter={16}>
+            <Col span={8}>
+              <Form.Item name="salesOwner" label="客户经理">
+                <Select>
+                  {salesTeam.map((s) => (
+                    <Option key={s.id} value={s.id}>
+                      {s.name} - {s.region}
+                    </Option>
+                  ))}
+                </Select>
+              </Form.Item>
+            </Col>
+            <Col span={8}>
+              <Form.Item name="totalOrders" label="累计订单数">
+                <InputNumber style={{ width: '100%' }} min={0} placeholder="0" />
+              </Form.Item>
+            </Col>
+            <Col span={8}>
+              <Form.Item name="annualRevenue" label="年收入(元)">
+                <InputNumber style={{ width: '100%' }} min={0} placeholder="0" />
+              </Form.Item>
+            </Col>
+          </Row>
+
+          <Row gutter={16}>
+            <Col span={12}>
+              <Form.Item name="tags" label="标签">
+                <Input placeholder="用逗号分隔，如：海运, VIP, 空运" />
+              </Form.Item>
+            </Col>
+            <Col span={12}>
+              <Form.Item name="notes" label="备注">
+                <Input placeholder="客户备注信息" />
+              </Form.Item>
+            </Col>
+          </Row>
+        </Form>
+      </Modal>
     </div>
   );
 };
