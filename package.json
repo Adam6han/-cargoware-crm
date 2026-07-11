@@ -1,8 +1,24 @@
 {
   "name": "cargoware-crm",
-  "private": true,
-  "version": "0.0.0",
+  "version": "1.0.0",
+  "description": "A modern CRM event tracking system for international logistics and freight forwarding operations",
   "type": "module",
+  "author": "Adam Han",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Adam6han/-cargoware-crm.git"
+  },
+  "homepage": "https://cargoware-crm.pages.dev",
+  "keywords": [
+    "crm",
+    "event-tracking",
+    "logistics",
+    "freight-forwarding",
+    "react",
+    "ant-design",
+    "vite"
+  ],
   "scripts": {
     "dev": "vite",
     "build": "vite build",
